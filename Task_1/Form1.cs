@@ -20,16 +20,17 @@ namespace Task_1
         SqlConnection sql = new SqlConnection(connection);
         string query;
         DataSet set = new DataSet();
-        SqlDataAdapter dbAdapter = null;
-        SqlCommandBuilder commandBuilder = null;
         SqlCommand command = new SqlCommand();
+        SqlDataAdapter dbAdapter = new SqlDataAdapter();
+        SqlCommandBuilder commandBuilder = null;
 
         public Form1()
         {
             InitializeComponent();
             dateOfBirth.MaxDate = DateTime.Today;
             dateOfBirth.Value = DateTime.Today;
-
+            dbAdapter.SelectCommand = new SqlCommand($"select * from Persons", sql);
+            dbAdapter.Fill(set, "persons");
             try
             {
                 string tmp = File.ReadAllText($"../../SQLQuery.sql");
@@ -44,15 +45,36 @@ namespace Task_1
                     sql.Close();
             }
 
-            GridShow();
+            //GridShow();
         }
         private void GridShow()
         {
-            query = "select * from Persons";
-            dbAdapter = new SqlDataAdapter(query, sql);
-            commandBuilder = new SqlCommandBuilder(dbAdapter);
-            dbAdapter.Fill(set, "persons");
+            //dataGridView1.DataSource = null;
+            //dataGridView1.Rows.Clear();
+            //dataGridView1.Refresh();
+            //query = "select * from Persons";
+            //commandBuilder = new SqlCommandBuilder(dbAdapter);
+
+            dataGridView1.DataSource = null;
             dataGridView1.DataSource = set.Tables["persons"];
+
+            //try
+            //{
+            //    SqlConnection conn = new SqlConnection(cs);
+            //    set = new DataSet();
+            //    string sql = tbRequest.Text;
+            //    da = new SqlDataAdapter(sql, conn);
+            //    dataGridView1.DataSource = null;
+            //    cmd = new SqlCommandBuilder(da);
+            //    da.Fill(set, "mybook");
+            //    dataGridView1.DataSource = set.Tables["mybook"];
+            //}
+            //catch (Exception ex)
+            //{
+            //}
+            //finally
+            //{
+            //}
         }
         private void DateOfBirth_ValueChanged(object sender, EventArgs e)
         {
@@ -100,11 +122,12 @@ namespace Task_1
             {
                 lbWarning.Text = "";
 
+                command.Parameters.Clear();
                 command.Parameters.AddWithValue("@Name", tbName.Text);
                 command.Parameters.AddWithValue("@Lastname", tbLastName.Text);
                 command.Parameters.AddWithValue("@BirthDate", DateTime.Now.Date);
-                command.Parameters.AddWithValue("@Sex", rbMale.Checked?rbMale.Text:rbFemale.Text);
-                command.Parameters.AddWithValue("@ImageURL", pictureBox1.ImageLocation == null? "":pictureBox1.ImageLocation);
+                command.Parameters.AddWithValue("@Sex", rbMale.Checked ? rbMale.Text : rbFemale.Text);
+                command.Parameters.AddWithValue("@ImageURL", pictureBox1.ImageLocation == null ? "" : pictureBox1.ImageLocation);
                 command.Parameters.AddWithValue("@Sport", cbSport.Checked);
                 command.Parameters.AddWithValue("@Tourism", cbTourism.Checked);
                 command.Parameters.AddWithValue("@Books", cbBooks.Checked);
@@ -112,11 +135,11 @@ namespace Task_1
                 command.Parameters.AddWithValue("@Other", tbLastName.Text);
                 command.CommandText = $"insert into Persons values (@Name, @LastName, @BirthDate, @Sex, @ImageURL, @Sport, @Tourism, @Books, @Movies, @Other)";
                 command.Connection = sql;
-                dbAdapter = new SqlDataAdapter(command);
-                dbAdapter.Fill(set);
-                dataGridView1.DataSource = set.Tables[0];
-                command.Parameters.Clear();
-                GridShow();
+                dbAdapter.InsertCommand = command;
+                dbAdapter.Update(set, "persons");
+                dataGridView1.DataSource = set.Tables["persons"];
+                //GridShow();
+                pictureBox1.Load()
             }
         }
 
