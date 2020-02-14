@@ -18,10 +18,9 @@ namespace Task_1
     {
         static string connection = ConfigurationManager.ConnectionStrings["myConnection"].ConnectionString;
         SqlConnection sql = new SqlConnection(connection);
-        string query;
         DataSet set = new DataSet();
         SqlCommand command = new SqlCommand();
-        SqlDataAdapter dbAdapter = new SqlDataAdapter();
+        SqlDataAdapter dbAdapter = null;
         SqlCommandBuilder commandBuilder = null;
 
         public Form1()
@@ -29,8 +28,11 @@ namespace Task_1
             InitializeComponent();
             dateOfBirth.MaxDate = DateTime.Today;
             dateOfBirth.Value = DateTime.Today;
-            dbAdapter.SelectCommand = new SqlCommand($"select * from Persons", sql);
+            dbAdapter = new SqlDataAdapter($"select * from Persons", sql);
+            commandBuilder = new SqlCommandBuilder(dbAdapter);
             dbAdapter.Fill(set, "persons");
+            dataGridView1.DataSource = set.Tables["persons"];
+
             try
             {
                 string tmp = File.ReadAllText($"../../SQLQuery.sql");
@@ -44,37 +46,6 @@ namespace Task_1
                 if (sql != null)
                     sql.Close();
             }
-
-            //GridShow();
-        }
-        private void GridShow()
-        {
-            //dataGridView1.DataSource = null;
-            //dataGridView1.Rows.Clear();
-            //dataGridView1.Refresh();
-            //query = "select * from Persons";
-            //commandBuilder = new SqlCommandBuilder(dbAdapter);
-
-            dataGridView1.DataSource = null;
-            dataGridView1.DataSource = set.Tables["persons"];
-
-            //try
-            //{
-            //    SqlConnection conn = new SqlConnection(cs);
-            //    set = new DataSet();
-            //    string sql = tbRequest.Text;
-            //    da = new SqlDataAdapter(sql, conn);
-            //    dataGridView1.DataSource = null;
-            //    cmd = new SqlCommandBuilder(da);
-            //    da.Fill(set, "mybook");
-            //    dataGridView1.DataSource = set.Tables["mybook"];
-            //}
-            //catch (Exception ex)
-            //{
-            //}
-            //finally
-            //{
-            //}
         }
         private void DateOfBirth_ValueChanged(object sender, EventArgs e)
         {
@@ -122,24 +93,22 @@ namespace Task_1
             {
                 lbWarning.Text = "";
 
-                command.Parameters.Clear();
-                command.Parameters.AddWithValue("@Name", tbName.Text);
-                command.Parameters.AddWithValue("@Lastname", tbLastName.Text);
-                command.Parameters.AddWithValue("@BirthDate", DateTime.Now.Date);
-                command.Parameters.AddWithValue("@Sex", rbMale.Checked ? rbMale.Text : rbFemale.Text);
-                command.Parameters.AddWithValue("@ImageURL", pictureBox1.ImageLocation == null ? "" : pictureBox1.ImageLocation);
-                command.Parameters.AddWithValue("@Sport", cbSport.Checked);
-                command.Parameters.AddWithValue("@Tourism", cbTourism.Checked);
-                command.Parameters.AddWithValue("@Books", cbBooks.Checked);
-                command.Parameters.AddWithValue("@Movies", cbMovies.Checked);
-                command.Parameters.AddWithValue("@Other", tbLastName.Text);
-                command.CommandText = $"insert into Persons values (@Name, @LastName, @BirthDate, @Sex, @ImageURL, @Sport, @Tourism, @Books, @Movies, @Other)";
-                command.Connection = sql;
-                dbAdapter.InsertCommand = command;
-                dbAdapter.Update(set, "persons");
-                dataGridView1.DataSource = set.Tables["persons"];
-                //GridShow();
-                pictureBox1.Load()
+                DataTable dt = set.Tables["persons"];
+                dt.Columns[0].AutoIncrement = true;
+                dt.Columns[0].AutoIncrementSeed = ((int)dt.Rows[dt.Rows.Count - 1][0]) + 1;
+
+                DataRow dataRow = dt.NewRow();
+                dataRow[1] = tbName.Text;
+                dataRow[2] = tbLastName.Text;
+                dataRow[3] = DateTime.Now.Date;
+                dataRow[4] = rbMale.Checked ? rbMale.Text : rbFemale.Text;
+                dataRow[5] = pictureBox1.ImageLocation == null ? "" : pictureBox1.ImageLocation;
+                dataRow[6] = cbSport.Checked;
+                dataRow[7] = cbTourism.Checked;
+                dataRow[8] = cbBooks.Checked;
+                dataRow[9] = cbMovies.Checked;
+                dataRow[10] = tbLastName.Text;
+                dt.Rows.Add(dataRow);
             }
         }
 
@@ -156,17 +125,12 @@ namespace Task_1
         {
             try
             {
-                dbAdapter.Update(set, "users");
+                dbAdapter.Update(set, "persons");
             }
             catch (Exception)
             {
 
             }
-        }
-
-        private void DataGridView1_UserAddedRow(object sender, DataGridViewRowEventArgs e)
-        {
-            GridShow();
         }
     }
 }
